@@ -1,228 +1,136 @@
-# asset-repository-template
+# Asset Repository Template
 
-<!--
-MAINTAINER: Add badges for your project. Common badges include:
-- Build status (GitHub Actions)
-- Code coverage
-- License
-- Version/Release
-- Downloads
+A template repository that demonstrates how to manage Itential Platform assets using Git and automatic promotion through CI/CD pipelines. Use this as a starting point to version-control your asset bundles and automate deployments across environments.
 
-Example badges (update URLs for your project):
+> **Currently supported:** GitHub Actions
+>
+> **Coming soon:** Bitbucket Pipelines, GitLab CI/CD, Jenkins
 
-[![Build Status](https://github.com/itential/asset-repository-template/actions/workflows/ci.yml/badge.svg)](https://github.com/itential/asset-repository-template/actions/workflows/ci.yml)
-[![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
-[![GitHub release](https://img.shields.io/github/v/release/itential/asset-repository-template)](https://github.com/itential/asset-repository-template/releases)
--->
+## How It Works
 
-[![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
+This repository uses a tag-based promotion model. CI/CD pipelines execute the shared scripts in `pipelines/scripts/` to automatically version, tag, and deploy assets across environments.
 
-<!--
-MAINTAINER: Write a clear, concise description of what your project does.
-This should be 2-3 sentences that answer:
-- What problem does this solve?
-- Who is it for?
-- What makes it useful?
-
-Example:
-"A high-performance CLI tool for managing network device configurations.
-Designed for network engineers who need to automate bulk changes across
-multiple vendors with built-in validation and rollback support."
--->
-
-A brief description of what asset-repository-template does and why it exists.
-
-## Features
-
-<!--
-MAINTAINER: List 4-6 key features that highlight what makes your project valuable.
-Use action-oriented language and be specific about benefits.
-
-Example:
-- **Fast execution** - Processes 1000+ devices in parallel
-- **Multi-vendor support** - Works with Cisco, Juniper, Arista, and more
-- **Safe by default** - Dry-run mode and automatic rollback on failures
-- **Extensible** - Plugin system for custom device types
--->
-
-- **Feature one** - Brief description of the feature
-- **Feature two** - Brief description of the feature
-- **Feature three** - Brief description of the feature
-- **Feature four** - Brief description of the feature
-
-## Requirements
-
-<!--
-MAINTAINER: List all prerequisites needed to use your project.
-Be specific about versions where it matters.
-
-Examples by tech stack:
-- Python: Python 3.10+, pip or uv
-- Node.js: Node.js 18+, npm 9+
-- Go: Go 1.21+
-- Rust: Rust 1.70+, cargo
--->
-
-- Requirement 1 (e.g., Python 3.10+)
-- Requirement 2 (e.g., specific system dependency)
-
-## Installation
-
-<!--
-MAINTAINER: Provide clear installation instructions for all supported methods.
-Order from simplest/most common to advanced. Include copy-pasteable commands.
-
-Common patterns:
-- Package managers (pip, npm, brew, cargo)
-- Binary releases
-- Building from source
--->
-
-### Quick Install
-
-```bash
-# Add your primary installation command here
-# Examples:
-# pip install asset-repository-template
-# npm install -g asset-repository-template
-# brew install itential/tap/asset-repository-template
-# go install github.com/itential/asset-repository-template@latest
+```text
+ develop branch           main branch              Staging                Production
+ ──────────────           ───────────              ───────                ──────────
+       |                       |                      |                       |
+   commit work                 |                      |                       |
+       |                       |                      |                       |
+   open PR ──── merge ────►    |                      |                       |
+       |                   auto-rc-tag                |                       |
+       |                   creates v1.1.0-rc.1        |                       |
+       |                       |                      |                       |
+       |                  tag push triggers           |                       |
+       |                  asset-promotion ────────► deploy to staging         |
+       |                       |                      |                       |
+       |                       |                  validate & test             |
+       |                       |                      |                       |
+       |  ◄───── fix in develop ◄──────────── issues found                   |
+       |                       |                      |                       |
+   open PR ──── merge ────►    |                      |                       |
+       |                   auto-rc-tag                |                       |
+       |                   creates v1.1.0-rc.2        |                       |
+       |                       |                      |                       |
+       |                  tag push triggers           |                       |
+       |                  asset-promotion ────────► re-deploy to staging      |
+       |                       |                      |                       |
+       |                       |                  validate & test             |
+       |                       |                      |                       |
+       |                  manual tag push              |                       |
+       |                     v1.1.0                    |                       |
+       |                       |                      |                       |
+       |                  asset-promotion ─────────────────────────► deploy to prod
 ```
 
-### From Source
+### Automatic Versioning
 
-```bash
-git clone https://github.com/itential/asset-repository-template.git
-cd asset-repository-template
+The `auto-rc-tag` step in the diagram above uses [Conventional Commits](https://www.conventionalcommits.org/) to determine the next semantic version. The script scans all commit messages since the last production tag and picks the highest-priority bump:
 
-# Add build/install commands for your tech stack
-# Examples:
-# pip install -e .
-# npm install && npm run build
-# go build -o asset-repository-template .
-# cargo build --release
+| Bump Type | Commit Prefix | Example | Version Change |
+| --- | --- | --- | --- |
+| **Major** | `feat!:` or `feat(scope)!:` or `BREAKING CHANGE:` | `feat!: redesign asset schema` | `v1.2.3` → `v2.0.0` |
+| **Minor** | `feat:` or `feat(scope):` | `feat: add lifecycle manager support` | `v1.2.3` → `v1.3.0` |
+| **Patch** | Anything else (`fix:`, `chore:`, `docs:`, etc.) | `fix: correct automation import` | `v1.2.3` → `v1.2.4` |
+
+If any commit in the range is a breaking change, the bump is **major** regardless of other commits. If no `feat` or breaking change commits are found, the bump defaults to **patch**.
+
+Once the version is determined, the script creates a release candidate tag (e.g., `v1.3.0-rc.1`). If an RC tag for that version already exists then the RC number is incremented (e.g., `v1.3.0-rc.2`).
+
+## Repository Structure
+
+```text
+.
+├── Asset Bundle/              # Example asset bundle
+│   ├── studio/
+│   ├── operations_manager/
+│   ├── lifecycle_manager/
+│   └── configuration_manager/
+│
+├── pipelines/
+│   ├── github/                # GitHub Actions pipeline definitions
+│   ├── scripts/               # Shared deployment scripts
+│   │   ├── deploy.py
+│   │   └── bump-version.sh
+│   └── ...                    # Future Git platform directories
+│
+└── README.md
 ```
 
-## Quick Start
+### `Asset Bundle/`
 
-<!--
-MAINTAINER: Show the simplest possible usage that demonstrates value.
-This should be a "hello world" equivalent that works in under a minute.
-Include expected output where helpful.
--->
+An example asset bundle that shows the expected directory layout. It includes sample assets for each supported Itential Platform application:
 
-```bash
-# Show the most basic usage example
-asset-repository-template --help
+- **`studio/`** — Studio project files (`.project.json`)
+- **`operations_manager/`** — Operations Manager automation files (`.automation.json`)
+- **`lifecycle_manager/`** — Lifecycle Manager resource model files (`.model.json`)
+- **`configuration_manager/`** — Configuration Manager golden config files (`.gctree.json`)
+
+You can add multiple bundles at the repo root and the deploy script will auto-discover them.
+
+### `pipelines/`
+
+Contains CI/CD pipeline definitions organized by platform, along with shared scripts that are called by each pipeline.
+
+**`pipelines/scripts/`** — Shared scripts used across all platforms:
+
+- **`deploy.py`** — Connects to an Itential Platform instance and imports all discovered assets from the repository. Currently supports Studio projects and Operations Manager automations. Support for Lifecycle Manager and Configuration Manager assets is coming soon.
+- **`bump-version.sh`** — Calculates the next semantic version based on commit messages and creates release candidate tags
+
+**Platform-specific pipeline directories:**
+
+Each platform directory contains workflow/pipeline definitions and a README with setup and usage instructions for that CI/CD system.
+
+| Directory | Platform | Status |
+| --- | --- | --- |
+| [`pipelines/github/`](pipelines/github) | GitHub Actions | Available |
+| `pipelines/bitbucket/` | Bitbucket Pipelines | Coming soon |
+| `pipelines/gitlab/` | GitLab CI/CD | Coming soon |
+| `pipelines/jenkins/` | Jenkins | Coming soon |
+
+See the README in each platform directory for setup and deployment instructions.
+
+## Adding a New Asset Bundle
+
+1. Create a new directory at the repo root — not nested inside other directories — (e.g., `My Use Case Bundle/`)
+2. Add subdirectories for each asset type and place your exported JSON files inside
+3. Commit and push to your develop branch
+
+```text
+My Use Case Bundle/
+├── studio/
+│   └── My Project.project.json
+├── operations_manager/              
+│   └── My Automation.automation.json
+├── lifecycle_manager/               
+│   └── My Resource.model.json
+└── configuration_manager/           
+    └── My Config.gctree.json
 ```
 
-<!--
-MAINTAINER: Add a real-world example that shows typical usage.
-
-Example:
-```bash
-# Configure a device
-asset-repository-template configure --target router1.example.com --config network.yaml
-
-# Output:
-# ✓ Connected to router1.example.com
-# ✓ Configuration validated
-# ✓ Changes applied successfully
-```
--->
-
-## Usage
-
-<!--
-MAINTAINER: Provide comprehensive usage examples organized by use case.
-Include both simple and advanced examples. Show common workflows.
--->
-
-### Basic Usage
-
-```bash
-# Add basic usage examples
-```
-
-### Configuration
-
-<!--
-MAINTAINER: If your project uses configuration files, show the format
-and explain the key options. Include a minimal working example.
-
-Example:
-```yaml
-# config.yaml
-target: production
-devices:
-  - hostname: router1.example.com
-    type: cisco_ios
-options:
-  timeout: 30
-  retry: 3
-```
--->
-
-### Advanced Examples
-
-<!--
-MAINTAINER: Show more complex scenarios that power users might need.
-Include examples for:
-- Automation/scripting
-- Integration with other tools
-- Performance optimization
-- Edge cases
--->
-
-```bash
-# Add advanced usage examples
-```
-
-## Documentation
-
-<!--
-MAINTAINER: Link to additional documentation resources.
-Remove sections that don't apply to your project.
--->
-
-- [Contributing Guide](CONTRIBUTING.md) - How to contribute to this project
-- [Code of Conduct](CODE_OF_CONDUCT.md) - Community guidelines
-- [Changelog](CHANGELOG.md) - Version history and release notes
-
-<!--
-MAINTAINER: Add links to additional docs if you have them:
-- [API Reference](docs/api.md)
-- [Configuration Guide](docs/configuration.md)
-- [Troubleshooting](docs/troubleshooting.md)
-- [Examples](examples/)
--->
-
-## Contributing
-
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) to get started.
-
-Before contributing, you'll need to sign our [Contributor License Agreement](CLA.md).
-
-## Support
-
-<!--
-MAINTAINER: Describe how users can get help. Options include:
-- GitHub Issues (for bugs)
-- GitHub Discussions (for questions)
-- Email support
-- Community chat (Slack, Discord)
--->
-
-- **Bug Reports**: [Open an issue](https://github.com/itential/asset-repository-template/issues/new)
-- **Questions**: [Start a discussion](https://github.com/itential/asset-repository-template/discussions)
-- **Maintainer**: [@jennlu330](https://github.com/jennlu330)
+The deploy script auto-discovers any bundles matching this structure. No additional configuration is needed.
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+Copyright 2026 Itential, LLC
 
----
-
-<p align="center">
-  Made with ❤️ by the <a href="https://github.com/itential">Itential</a> community
-</p>
+This project is licensed under the GNU General Public License v3.0 — see the [LICENSE](LICENSE) file for details.
