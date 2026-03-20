@@ -1,0 +1,79 @@
+{
+  "data": [
+    {
+      "_id": "69bd6eeb2dd564d1dc20d52a",
+      "name": "Simple Golden Config Tree",
+      "version": "initial",
+      "created": "2026-03-20T15:59:39.504Z",
+      "createdBy": "699f2e225fbeb4b19383dec9",
+      "deviceType": "cisco-ios",
+      "lastUpdated": "2026-03-20T15:59:39.504Z",
+      "lastUpdatedBy": "699f2e225fbeb4b19383dec9",
+      "root": {
+        "attributes": {
+          "configId": "69bd6eeb175c70863d75f9c6",
+          "deviceGroups": [],
+          "devices": [],
+          "remediationWorkflow": null,
+          "export": {
+            "_id": "69bd6eeb175c70863d75f9c6",
+            "created": "2026-03-20T15:59:39.504Z",
+            "createdBy": "699f2e225fbeb4b19383dec9",
+            "deviceType": "cisco-ios",
+            "lastUpdated": "2026-03-20T15:59:39.504Z",
+            "lastUpdatedBy": "699f2e225fbeb4b19383dec9",
+            "lines": [],
+            "template": ""
+          }
+        },
+        "children": [
+          {
+            "attributes": {
+              "configId": "69bd6eeb175c70863d75f9c7",
+              "deviceGroups": [],
+              "devices": [],
+              "remediationWorkflow": null,
+              "export": {
+                "_id": "69bd6eeb175c70863d75f9c7",
+                "created": "2026-03-20T15:59:39.504Z",
+                "createdBy": "699f2e225fbeb4b19383dec9",
+                "deviceType": "cisco-ios",
+                "lastUpdated": "2026-03-20T15:59:39.504Z",
+                "lastUpdatedBy": "699f2e225fbeb4b19383dec9",
+                "lines": [],
+                "template": ""
+              }
+            },
+            "children": [
+              {
+                "attributes": {
+                  "configId": "69bd6eeb175c70863d75f9c8",
+                  "deviceGroups": [],
+                  "devices": [],
+                  "remediationWorkflow": null,
+                  "export": {
+                    "_id": "69bd6eeb175c70863d75f9c8",
+                    "created": "2026-03-20T15:59:39.504Z",
+                    "createdBy": "699f2e225fbeb4b19383dec9",
+                    "deviceType": "cisco-ios",
+                    "lastUpdated": "2026-03-20T15:59:39.504Z",
+                    "lastUpdatedBy": "699f2e225fbeb4b19383dec9",
+                    "lines": [],
+                    "template": ""
+                  }
+                },
+                "children": [],
+                "name": "node-482"
+              }
+            ],
+            "name": "node-123"
+          }
+        ],
+        "name": "base"
+      },
+      "tags": [],
+      "treeId": "69bd6eeb175c70863d75f9c5",
+      "variables": {}
+    }
+  ]
+}
